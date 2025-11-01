@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quantum Portfolio Optimization</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+
+<body>
+  <header>
+    <span>Quantum Portfolio Optimization</span>
+  </header>
+
+  <main>
+    <div class="container">
+      <section class="form-card glass">
+        <h2>Build Your Portfolio</h2>
+        <form id="optimizeForm">
+          <label for="companies">Select Companies</label>
+          <select id="companies" name="companies" multiple>
+            <option>Apple Inc.</option>
+            <option>Microsoft Corporation</option>
+            <option>Alphabet Inc. (Google)</option>
+            <option>Amazon.com Inc.</option>
+            <option>Tesla Inc.</option>
+            <option>Meta Platforms Inc.</option>
+            <option>NVIDIA Corporation</option>
+            <option>Netflix Inc.</option>
+            <option>Intel Corporation</option>
+            <option>Walmart Inc.</option>
+            <option>Bank of America</option>
+            <option>JPMorgan Chase & Co.</option>
+            <option>Goldman Sachs Group Inc.</option>
+            <option>Exxon Mobil Corporation</option>
+            <option>Chevron Corporation</option>
+            <option>Pfizer Inc.</option>
+            <option>Johnson & Johnson</option>
+            <option>Procter & Gamble Co.</option>
+            <option>The Coca-Cola Company</option>
+            <option>PepsiCo Inc.</option>
+          </select>
+          <small>Hold <b>Ctrl</b> (or <b>Cmd</b> on Mac) to select multiple companies</small>
+
+          <label for="k">Total Selected Stocks</label>
+          <input type="number" id="k" name="k" value="20" />
+
+          <label for="lambda">Risk Tolerance Level</label>
+          <input type="number" step="0.1" id="lambda" name="lambda" value="2.7" />
+
+          <button type="submit" class="glow-btn">Optimize Portfolio</button>
+        </form>
+      </section>
+
+      <section class="results-card glass">
+        <h2>Portfolio Analysis</h2>
+        <div id="results">
+          <div class="result-item"><strong>Selected Assets:</strong> <span id="selected-assets">—</span></div>
+          <div class="result-item"><strong>Open:</strong> <span id="open-price">—</span></div>
+          <div class="result-item"><strong>High:</strong> <span id="high-price">—</span></div>
+          <div class="result-item"><strong>Low:</strong> <span id="low-price">—</span></div>
+          <div class="result-item"><strong>Close:</strong> <span id="close-price">—</span></div>
+          <div class="result-item"><strong>Volume:</strong> <span id="volume">—</span></div>
+          <div class="result-item"><strong>Expected Return:</strong> <span id="expected-return">—</span></div>
+          <div class="result-item"><strong>Risk:</strong> <span id="risk">—</span></div>
+        </div>
+
+        <div id="summary-table-container" class="summary-card"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer>© 2025 Quantum Finance Project</footer>
+
+  <script>
+    document.getElementById("optimizeForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const select = document.getElementById("companies");
+      const companies = Array.from(select.selectedOptions).map(opt => opt.value);
+      const k = document.getElementById("k").value;
+      const lambda = document.getElementById("lambda").value;
+
+      if (companies.length === 0) {
+        alert("Please select at least one company.");
+        return;
+      }
+
+      const response = await fetch("/optimize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ companies, k, lambda }),
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        alert("Error: " + data.error);
+        return;
+      }
+
+      document.getElementById("selected-assets").innerText = data.selected_assets || "—";
+      document.getElementById("open-price").innerText = data.open?.toFixed(2) || "—";
+      document.getElementById("high-price").innerText = data.high?.toFixed(2) || "—";
+      document.getElementById("low-price").innerText = data.low?.toFixed(2) || "—";
+      document.getElementById("close-price").innerText = data.close?.toFixed(2) || "—";
+      document.getElementById("volume").innerText = data.volume?.toLocaleString() || "—";
+      document.getElementById("expected-return").innerText = data.expected_return?.toFixed(4) || "—";
+      document.getElementById("risk").innerText = data.risk?.toFixed(4) || "—";
+
+      const summary = data.summary || [];
+      if (summary.length) {
+        const tableHTML = `
+          <h3>Understanding Your Results</h3>
+          <table class="summary-table">
+            <thead><tr><th>Term</th><th>Meaning</th></tr></thead>
+            <tbody>
+              ${summary.map(row => `<tr><td>${row.Term}</td><td>${row.Meaning}</td></tr>`).join("")}
+            </tbody>
+          </table>`;
+        document.getElementById("summary-table-container").innerHTML = tableHTML;
+      }
+    });
+  </script>
+</body>
+</html>
